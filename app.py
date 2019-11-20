@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, request, jsonify
 from flask_login import login_required, UserMixin, login_user, logout_user
 from config import *
 from exts import db, login_manager
@@ -22,20 +22,6 @@ def create_app():
 app = create_app()
 
 
-class UserForAuth(UserMixin):
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return '1'
-
-
 @app.route('/')
 def hello_world():
     return 'Hello World!'
@@ -46,7 +32,7 @@ auth = Blueprint('auth', __name__)
 
 @login_manager.user_loader
 def load_user(user_id):
-    user = UserForAuth()
+    user = User.query.filter(User.id==user_id).first()
     return user
 
 
@@ -58,14 +44,31 @@ def unauthorized():
     }
 
 
-@auth.route('login', methods=['GET', 'POST'])
+@auth.route('login', methods=['POST'])
 def login():
-    user = User()
-    login_user(user)
-    return 'login page'
+    try:
+        name = request.json.get('username')
+        password = request.json.get('password')
+    except:
+        return jsonify({
+            "code": -100,
+            "msg": "params not enough"
+        })
+    if name and password:
+        user = User.query.filter(name==name, password==password).first()
+        if user:
+            login_user(user)
+            return jsonify({
+                "code": 0,
+                "msg": "login success"
+            })
+    return jsonify({
+        "code": -1,
+        "msg": "name or password error"
+    })
 
 
-@auth.route('logout', methods=['GET', 'POST'])
+@auth.route('logout', methods=['GET'])
 @login_required
 def log_out():
     logout_user()
@@ -76,8 +79,6 @@ def log_out():
 @login_required
 def test():
     return 'yes you are allowed'
-
-
 
 
 app.register_blueprint(auth, url_prefix='/auth')
