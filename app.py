@@ -54,8 +54,9 @@ def login():
             "code": -100,
             "msg": "params not enough"
         })
+    print(name, password)
     if name and password:
-        user = User.query.filter(name==name, password==password).first()
+        user = User.query.filter(User.name==name, User.password==password).first()
         if user:
             login_user(user)
             return jsonify({
