@@ -39,7 +39,7 @@ def load_user(user_id):
 @login_manager.unauthorized_handler
 def unauthorized():
     return {
-        "code": -1,
+        "code": 401,
         "msg": '请登录'
     }
 
